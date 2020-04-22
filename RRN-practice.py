@@ -1,4 +1,9 @@
 import pandas as pd
+import numpy as np
+import random
+
+from collections import deque
+from sklearn import preprocessing
 
 SEQ_LEN = 60
 PREDICT_SEQ_LEN = 3
@@ -9,6 +14,25 @@ def classify(current, future):
         return 1
     else:
         return 0
+
+def preprocess_df(df):
+    df = df.drop('future', axis=1)
+
+    for col in df.columns:
+        if col != 'target':
+            df[col] = preprocessing.scale(df[col].values)
+
+    df.dropna(inplace=True)
+
+    sequential_data = []
+    prev_days = deque(maxlen=SEQ_LEN)
+
+    for i in df.values:
+        prev_days.append([n for n in i[:-1]])
+        if len(prev_days) == SEQ_LEN:
+            sequential_data.append([np.array(prev_days), i[-1]])
+
+    random.shuffle(sequential_data)
 
 
 main_df = pd.DataFrame()
@@ -35,4 +59,17 @@ main_df['future'] = main_df[f"{RATIO_TO_PREDICT}_close"].shift(-PREDICT_SEQ_LEN)
 
 main_df['target'] = list(map(classify, main_df[f"{RATIO_TO_PREDICT}_close"], main_df['future']))
 
-print(main_df[["EURUSD_close", "future", 'target']].head())
+#print(main_df[["EURUSD_close", "future", 'target']].head())
+
+first_80pct = int(0.8 * len(main_df))
+next_10pct = int(0.1 * len(main_df))
+
+train_main_df = main_df[:first_80pct]
+validation_main_df = main_df[first_80pct:first_80pct + next_10pct]
+test_main_df = main_df[first_80pct + next_10pct:]
+
+#print(len(main_df))
+#print(len(train_main_df), len(validation_main_df), len(test_main_df))
+#print(len(train_main_df) + len(validation_main_df) + len(test_main_df))
+
+preprocess_df(train_main_df)
