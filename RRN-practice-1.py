@@ -1,10 +1,11 @@
-#***Not currently working, gives an error due to the shape of the data going
-#into the model, reattempting using a different method in practice-2***
+# ***Not currently working, gives an error due to the shape of the data going
+# into the model, reattempting using a different method in practice-2***
 
-#takes time series data of four currency pairs, combines them into one dataframe,
-#preprocesses (scaling and balancing etc.), splits into sequences of certain time
-#length and then use RNN in tensorflow to predict whether the value of the target
-#currency pair will be higher or lower a set amount of time in th future.
+# Based on YouTube tutorial by Sentdex - takes time series data of four currency 
+# pairs, combines them into one dataframe, preprocesses (scaling and balancing 
+# etc.), splits into sequences of certain time length and then use RNN in 
+# tensorflow to predict whether the value of the target currency pair will be 
+# higher or lower a set amount of time in th future.
 
 #import libraries
 import pandas as pd
