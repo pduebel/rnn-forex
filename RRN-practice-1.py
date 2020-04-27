@@ -1,3 +1,12 @@
+#***Not currently working, gives an error due to the shape of the data going
+#into the model, reattempting using a different method in practice-2***
+
+#takes time series data of four currency pairs, combines them into one dataframe,
+#preprocesses (scaling and balancing etc.), splits into sequences of certain time
+#length and then use RNN in tensorflow to predict whether the value of the target
+#currency pair will be higher or lower a set amount of time in th future.
+
+#import libraries
 import pandas as pd
 import numpy as np
 import random
@@ -10,21 +19,26 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM, GRU, BatchNormalization
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 
+#set hyperparameters
 SEQ_LEN = 60
 PREDICT_SEQ_LEN = 3
 END_OF_WEEK = 7021
 RATIO_TO_PREDICT = "EURUSD"
 EPOCHS = 10
 BATCH_SIZE = 64
-NAME = f"{SEQ_LEN}-SEQ-{PREDICT_SEQ_LEN}-PRED-{int(time.time())}"
 
 def classify(current, future):
+    #function to return 1, or buy, when the future value is higher than the
+    #current value and return 0, or sell, when it is lower
     if float(future) > float(current):
         return 1
     else:
         return 0
 
 def preprocess_df(df, balance):
+    #preprocessed dataframe by converting absolute values to pct change,
+    #scaling, shuffling, splitting series into sequences and balancing
+    #if balance set to True
     df = df.drop('future', axis=1)
 
     for col in df.columns:
@@ -76,9 +90,11 @@ def preprocess_df(df, balance):
         
     return np.array(x), y
 
+#combine timeseries data from different currency pairs into one pandas dataframe
 main_df = pd.DataFrame()
 
 ratios = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY']
+
 for ratio in ratios:
     dataset = "Practice-data/%s.csv" %(ratio)
     df = pd.read_csv(dataset)
@@ -96,24 +112,22 @@ for ratio in ratios:
     else:
         main_df = main_df.join(df)
 
+#create targets for model using classify function
 main_df['future'] = main_df[f"{RATIO_TO_PREDICT}_close"].shift(-PREDICT_SEQ_LEN)
 
 main_df['target'] = list(map(classify, main_df[f"{RATIO_TO_PREDICT}_close"], main_df['future']))
 
-#print(main_df[["EURUSD_close", "future", 'target']].head())
-
+#removing data from after close of play Friday as there were no changes in values
 main_df = main_df[:END_OF_WEEK]
 
+#split into train, validation and test samples and preprocessing using
+#preprocess_df function
 first_80pct = int(0.8 * len(main_df))
 next_10pct = int(0.1 * len(main_df))
 
 train_main_df = main_df[:first_80pct]
 validation_main_df = main_df[first_80pct:first_80pct + next_10pct]
 test_main_df = main_df[first_80pct + next_10pct:]
-
-#print(len(main_df))
-#print(len(train_main_df), len(validation_main_df), len(test_main_df))
-#print(len(train_main_df) + len(validation_main_df) + len(test_main_df))
 
 train_x, train_y = preprocess_df(train_main_df, True)
 validation_x, validation_y = preprocess_df(validation_main_df, True)
@@ -124,10 +138,12 @@ print(f"Train 0: {train_y.count(0)} train 1: {train_y.count(1)}")
 print(f"Validation 0: {validation_y.count(0)} validation 1: {validation_y.count(1)}")
 print(f"Test 0: {test_y.count(0)} test 1: {test_y.count(1)}")
 
+#converting targets from list to np array so works in model
 train_y = np.asarray(train_y)
 validation_y = np.asarray(validation_y)
 test_y = np.asarray(test_y)
 
+#defining model 
 model = Sequential([
                     LSTM(128, input_shape= train_x.shape[-2:], return_sequences=True),
                     Dropout(0.2),
@@ -149,6 +165,7 @@ model = Sequential([
 
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
+#training model
 model.fit(train_x,
           train_y,
           batch_size=BATCH_SIZE,
