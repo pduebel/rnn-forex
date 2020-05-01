@@ -1,11 +1,10 @@
-# ***Not currently working, gives an error due to the shape of the data going
-# into the model, reattempting using a different method in practice-2***
-
 # Based on YouTube tutorial by Sentdex - takes time series data of four currency 
 # pairs, combines them into one dataframe, preprocesses (scaling and balancing 
 # etc.), splits into sequences of certain time length and then use RNN in 
 # tensorflow to predict whether the value of the target currency pair will be 
-# higher or lower a set amount of time in th future.
+# higher or lower a set amount of time in the future.
+
+#Accuracy no better than random, try slightly different preprocessing in practice 2
 
 #import libraries
 import pandas as pd
@@ -24,7 +23,7 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 SEQ_LEN = 60
 PREDICT_SEQ_LEN = 3
 END_OF_WEEK = 7021
-RATIO_TO_PREDICT = "EURUSD"
+RATIO_TO_PREDICT = "BTCUSD"
 EPOCHS = 10
 BATCH_SIZE = 64
 
@@ -94,7 +93,7 @@ def preprocess_df(df, balance):
 #combine timeseries data from different currency pairs into one pandas dataframe
 main_df = pd.DataFrame()
 
-ratios = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY']
+ratios = ['BTCUSD', 'LTCUSD', 'ETHUSD']
 
 for ratio in ratios:
     dataset = "Practice-data/%s.csv" %(ratio)
@@ -106,7 +105,7 @@ for ratio in ratios:
                        "Volume": "%s_volume" %(ratio)
                        },
               inplace=True)
-    df.set_index('Gmt time', inplace=True)
+    df.set_index('Local time', inplace=True)
     
     if len(main_df) == 0:
         main_df = df
@@ -117,9 +116,6 @@ for ratio in ratios:
 main_df['future'] = main_df[f"{RATIO_TO_PREDICT}_close"].shift(-PREDICT_SEQ_LEN)
 
 main_df['target'] = list(map(classify, main_df[f"{RATIO_TO_PREDICT}_close"], main_df['future']))
-
-#removing data from after close of play Friday as there were no changes in values
-main_df = main_df[:END_OF_WEEK]
 
 #split into train, validation and test samples and preprocessing using
 #preprocess_df function
@@ -154,7 +150,7 @@ model = Sequential([
                     Dropout(0.1),
                     BatchNormalization(),
 
-                    LSTM(128, return_sequences=True),
+                    LSTM(128),
                     Dropout(0.2),
                     BatchNormalization(),
 
@@ -172,5 +168,4 @@ model.fit(train_x,
           batch_size=BATCH_SIZE,
           epochs=EPOCHS,
           validation_data=(validation_x, validation_y),
-          verbose=2
           )
