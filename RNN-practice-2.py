@@ -61,7 +61,7 @@ def multivariate_data(dataset, target, start_index, end_index, history_size,
         data.append(dataset[indices])
 
         if single_step:
-            labels.append(target[i + target_size])
+            labels.append(target[i])
         else:
             labels.append(target[i:i + target_size])
     
@@ -113,6 +113,8 @@ STEP = 1
 main_df['future'] = main_df[f"{RATIO_TO_PREDICT}_close"].shift(-FUTURE_TARGET)
 main_df['target'] = list(map(classify, main_df[f"{RATIO_TO_PREDICT}_close"], main_df['future']))
 
+main_df = main_df[:7022]
+
 first_80pct = int(0.8 * len(main_df))
 next_10pct = int(0.1 * len(main_df))
 
@@ -138,6 +140,11 @@ x_val, y_val = multivariate_data(validation_df_vals, validation_df_vals[:, -1],
                                  0, None, PAST_HISTORY,
                                  FUTURE_TARGET, STEP,
                                  single_step=True)
+x_test, y_test = multivariate_data(test_df_vals, test_df_vals[:, -1],
+                                   0, None, PAST_HISTORY,
+                                   FUTURE_TARGET, STEP,
+                                   single_step=True)
+
 
 BATCH_SIZE = 100
 BUFFER_SIZE = 10000
@@ -187,3 +194,7 @@ single_step_history = model.fit(train_data,
 #produce plot of losses
 plot_train_history(single_step_history, 
                    'Single Step Training and validation loss')
+
+model.evaluate(x_test, y_test)
+
+model.save('Saved-models\Model1')
