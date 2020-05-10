@@ -51,7 +51,7 @@ def multivariate_data(dataset, target, start_index, end_index, history_size,
     
     for i in range(start_index, end_index):
         indices = range(i - history_size, i, step)
-        data.append(dataset[indices])
+        data.append(dataset[indices, :-1])
 
         if single_step:
             labels.append(target[i])
@@ -116,10 +116,10 @@ x_test, y_test = multivariate_data(main_df_vals, main_df_vals[:, -1],
                                    FUTURE_TARGET, STEP,
                                    single_step=True)
 
-x = np.reshape(x_test[0], (1, 60, 7))
-#print(x)
+#x = np.reshape(x_test[0], (1, 60, 7))
+print(x_test)
 
 #load model and evaluate accuracy at predicting different historical data
-model = tf.keras.models.load_model('Saved-models/Model1')
-print(model.evaluate(x_test))
+#model = tf.keras.models.load_model('Saved-models/Model1')
+#print(model.evaluate(x_test))
 #print(model.redict(x))

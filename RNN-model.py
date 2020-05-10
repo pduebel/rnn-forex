@@ -58,7 +58,7 @@ def multivariate_data(dataset, target, start_index, end_index, history_size,
     
     for i in range(start_index, end_index):
         indices = range(i - history_size, i, step)
-        data.append(dataset[indices])
+        data.append(dataset[indices, : -1])
 
         if single_step:
             labels.append(target[i])
